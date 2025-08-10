@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -15,13 +14,48 @@
     table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background: #ffcccc; }
-    #listaVendedores button { margin: 3px;}
     .totais span { margin-right: 20px; font-weight: bold; }
     #painelVendedor { margin-top: 20px; background: #fff; padding: 15px; border: 1px solid #b30000; border-radius: 6px; }
     .acoes button { margin: 0 2px; }
     /* Botão salvar vendas verde */
     #btnSalvarVendas { background: #006400; }
     #btnSalvarVendas:hover { background: #004d00; }
+
+    /* Lista de vendedores em blocos (botões full-width) */
+    #listaVendedores { max-width: 900px; margin-top: 10px; }
+    .vendor-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .vendor-btn {
+      flex: 1;
+      text-align: left;
+      background: #fff;
+      color: #333;
+      border: 1px solid #d0d0d0;
+      padding: 12px 14px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .vendor-btn:hover { background:#f3f3f3; }
+    .vendor-meta { font-size: 13px; color: #666; margin-left: 8px; }
+    .vendor-del {
+      background: #cc0000;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .vendor-del:hover { background:#990000; }
+    @media (max-width:600px){
+      .vendor-row { flex-direction: column; align-items: stretch; }
+      .vendor-del { width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -118,11 +152,47 @@
       const div = document.getElementById('listaVendedores');
       div.innerHTML = '';
       vendedores.forEach(v => {
+        const row = document.createElement('div');
+        row.className = 'vendor-row';
+
         const btn = document.createElement('button');
-        btn.textContent = v.nome;
+        btn.className = 'vendor-btn';
+        // mostrar nome e cotação
+        btn.innerHTML = `<strong>${v.nome}</strong> <span class="vendor-meta">Cotação: R$ ${Number(v.cotacao).toFixed(2)}</span>`;
         btn.onclick = () => abrirPainel(v.nome);
-        div.appendChild(btn);
+
+        const del = document.createElement('button');
+        del.className = 'vendor-del';
+        del.textContent = 'Excluir';
+        del.onclick = (e) => {
+          e.stopPropagation();
+          if (confirm(`Confirma a exclusão do vendedor "${v.nome}" e todo o histórico de vendas dele?`)) {
+            excluirVendedor(v.nome);
+          }
+        };
+
+        row.appendChild(btn);
+        row.appendChild(del);
+        div.appendChild(row);
       });
+    }
+
+    function excluirVendedor(nome) {
+      // remover do array de vendedores
+      vendedores = vendedores.filter(v => v.nome !== nome);
+      // remover histórico de vendas
+      if (vendas[nome]) delete vendas[nome];
+
+      localStorage.setItem('vendedores', JSON.stringify(vendedores));
+      localStorage.setItem('vendas', JSON.stringify(vendas));
+
+      // esconder painel se for o atual
+      if (vendedorAtual === nome) {
+        voltarCadastro();
+      }
+
+      listarVendedores();
+      alert(`Vendedor "${nome}" excluído.`);
     }
 
     function abrirPainel(nome) {
@@ -256,6 +326,7 @@
       document.getElementById('painelVendedor').style.display = 'none';
     }
 
+    // inicializa listagem
     listarVendedores();
   </script>
 </body>
